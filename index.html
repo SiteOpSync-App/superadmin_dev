@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>SiteOpSync Superadmin</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="siteopsync_app_logo_maskable.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="SiteOpSync Superadmin">
+    <link rel="stylesheet" href="super.css">
+</head>
+<body>
+    <section id="login" class="box">
+        <img src="siteopsync_app_logo_maskable.png" alt="SiteOpSync" class="login-logo">
+        <h1>SiteOpSync Superadmin</h1>
+        <label class="field">Password<input type="password" id="pw" autocomplete="current-password"></label>
+        <p id="login-err" class="err"></p>
+        <button onclick="signIn()">Sign in</button>
+                <footer style="margin-top: 1.5rem; font-size: 0.75rem; color: #64748b; text-align: center;">
+            &copy; 2026 SiteOpSync&trade;. All rights reserved.
+        </footer>
+    </section>
+
+    <section id="main" hidden>
+        <header>
+            <img src="siteopsync_app_logo_maskable.png" alt="" class="header-logo">
+            <h1>SiteOpSync clients</h1>
+            <span id="toast" class="ok"></span>
+            <button onclick="openClient('')">+ Add client</button>
+            <button class="ghost" onclick="signOut()">Sign out</button>
+        </header>
+        <p class="note">Switch sections on or off per client. Each client's Apps Script checks this every few minutes, hides the sections in the app, and refuses requests for them. Applications need Installations &amp; progress.</p>
+        <div id="clients" class="cards"></div>
+                <footer style="margin-top: 1.5rem; font-size: 0.75rem; color: #64748b; text-align: center;">
+            &copy; 2026 SiteOpSync&trade;. All rights reserved.
+        </footer>
+
+    </section>
+
+    <dialog id="dlg">
+        <h2 id="dt"></h2>
+        <label class="field">Client id (letters, numbers, dashes; fixed once created)<input id="c-id" maxlength="40"></label>
+        <label class="field">Company name<input id="c-name" maxlength="80"></label>
+        <label class="field">Site address (Pages URL)<input id="c-pages" maxlength="200" placeholder="https://i-glazeltd-siteopsync.pages.dev"></label>
+        <label class="field">Apps Script web app URL<input id="c-script" maxlength="300" placeholder="https://script.google.com/macros/s/.../exec"></label>
+        <label class="field">Notes<textarea id="c-notes" rows="2" maxlength="500"></textarea></label>
+        <p id="de" class="err"></p>
+        <div class="btns"><button id="ds">Save</button><button class="ghost" onclick="dlg.close()">Cancel</button></div>
+    </dialog>
+
+    <script src="super.js"></script>
+</body>
+</html>
