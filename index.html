@@ -1,57 +1,357 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow">
-    <title>SiteOpSync Superadmin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SiteOpSync — Field Portal</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="siteopsync_app_logo_maskable.png">
+    <meta name="theme-color" content="#090e1a">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="SiteOpSync Superadmin">
-    <link rel="stylesheet" href="super.css">
+    <meta name="apple-mobile-web-app-title" content="SiteOpSync">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=1.24.0">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
-<body>
-    <section id="login" class="box">
-        <img src="siteopsync_app_logo_maskable.png" alt="SiteOpSync" class="login-logo">
-        <h1>SiteOpSync Superadmin</h1>
-        <label class="field">Password<input type="password" id="pw" autocomplete="current-password"></label>
-        <p id="login-err" class="err"></p>
-        <button onclick="signIn()">Sign in</button>
-                <footer style="margin-top: 1.5rem; font-size: 0.75rem; color: #64748b; text-align: center;">
-            &copy; 2026 SiteOpSync&trade;. All rights reserved.
-        </footer>
-    </section>
+<body data-title="{co} Site Portal" class="portal-body">
+    <div class="ambient-grid" aria-hidden="true"></div>
 
-    <section id="main" hidden>
-        <header>
-            <img src="siteopsync_app_logo_maskable.png" alt="" class="header-logo">
-            <h1>SiteOpSync clients</h1>
-            <span id="toast" class="ok"></span>
-            <button onclick="openClient('')">+ Add client</button>
-            <button class="ghost" onclick="signOut()">Sign out</button>
+    <div class="app-container">
+        <!-- Top Sync & Brand Status Strip -->
+        <div class="status-strip">
+            <div class="sync-indicator">
+                <span class="pulse-dot" aria-hidden="true"></span>
+                <span class="sync-label">READY</span>
+                <span class="sep">&bull;</span>
+                <span class="mono" id="live-clock">--:--</span>
+            </div>
+            <span class="brand-badge">SiteOpSync</span>
+        </div>
+
+        <!-- Client Branded Header -->
+        <header class="app-header">
+            <div class="brand-row">
+                <img src="company%20logo1.png" alt="Company Logo" class="company-logo">
+                <div class="brand-meta">
+                    <div class="brand-title-line">
+                        <h1 id="app-title">Site Login</h1>
+                        <span class="verified-pill" data-company>Field Portal</span>
+                    </div>
+                    <p id="app-subtitle">Enter your PIN</p>
+                </div>
+            </div>
         </header>
-        <p class="note">Switch sections on or off per client. Each client's Apps Script checks this every few minutes, hides the sections in the app, and refuses requests for them. Applications need Installations &amp; progress.</p>
-        <div id="clients" class="cards"></div>
-                <footer style="margin-top: 1.5rem; font-size: 0.75rem; color: #64748b; text-align: center;">
-            &copy; 2026 SiteOpSync&trade;. All rights reserved.
+
+        <p class="queue-banner hidden"></p>
+        <p id="queue-note" class="queue-note hidden"></p>
+
+        <!-- Screen 1: PIN Pad -->
+        <div id="pin-screen" class="screen-card">
+            <div class="pin-display">
+                <span id="pin-dots" class="dots">&bull;&bull;&bull;&bull;</span>
+            </div>
+            <div class="keypad">
+                <button type="button" class="key" onclick="pressKey('1')">1</button>
+                <button type="button" class="key" onclick="pressKey('2')">2</button>
+                <button type="button" class="key" onclick="pressKey('3')">3</button>
+                <button type="button" class="key" onclick="pressKey('4')">4</button>
+                <button type="button" class="key" onclick="pressKey('5')">5</button>
+                <button type="button" class="key" onclick="pressKey('6')">6</button>
+                <button type="button" class="key" onclick="pressKey('7')">7</button>
+                <button type="button" class="key" onclick="pressKey('8')">8</button>
+                <button type="button" class="key" onclick="pressKey('9')">9</button>
+                <button type="button" class="key action-key" onclick="clearPin()">C</button>
+                <button type="button" class="key" onclick="pressKey('0')">0</button>
+                <button type="button" class="key go" aria-label="Log in" onclick="submitPin()">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12.5l4.6 4.6L19 7.4"/>
+                    </svg>
+                </button>
+            </div>
+            <p id="pin-error" class="error-msg"></p>
+            <p class="note-small">No signal on site? Log in once with signal and your PIN will also work offline. Scans are saved on your phone and sent when you're back online.</p>
+            <button type="button" class="logout-btn hidden" id="install-btn">Install app on this phone</button>
+            <button type="button" class="logout-btn" onclick="openFaq()">Help &amp; FAQ</button>
+        </div>
+
+        <!-- Screen 2: Menu -->
+        <div id="menu-screen" class="screen-card hidden">
+            <div class="section-kicker">
+                <span>Field Operations</span>
+                <span class="mono" id="menu-role-tag">ACTIVE</span>
+            </div>
+            <button type="button" class="menu-card attend" onclick="openAttendance()">
+                <span class="menu-icon" aria-hidden="true">&#128338;</span>
+                <span class="menu-text">
+                    <strong>SITE ATTENDANCE</strong>
+                    <small>Log Site Check In / Out</small>
+                </span>
+                <span class="menu-chev" aria-hidden="true">&rsaquo;</span>
+            </button>
+            <button type="button" class="menu-card qa" onclick="openQa()">
+                <span class="menu-icon" aria-hidden="true">&#128203;</span>
+                <span class="menu-text">
+                    <strong>QUALITY ASSURANCE</strong>
+                    <small>Record Site QA Inspection</small>
+                </span>
+                <span class="menu-chev" aria-hidden="true">&rsaquo;</span>
+            </button>
+            <button type="button" class="menu-card prog" onclick="openProgress()">
+                <span class="menu-icon" aria-hidden="true">&#9989;</span>
+                <span class="menu-text">
+                    <strong>INSTALLATION PROGRESS</strong>
+                    <small>Tick stages, then QA inspection</small>
+                </span>
+                <span class="menu-chev" aria-hidden="true">&rsaquo;</span>
+            </button>
+            <button type="button" class="menu-card diary" onclick="openDiary()">
+                <span class="menu-icon" aria-hidden="true">&#128214;</span>
+                <span class="menu-text">
+                    <strong>DAILY DIARY</strong>
+                    <small>Notes and before / after photos</small>
+                </span>
+                <span class="menu-chev" aria-hidden="true">&rsaquo;</span>
+            </button>
+            <button type="button" class="menu-card hrs" onclick="openHours()">
+                <span class="menu-icon" aria-hidden="true">&#129534;</span>
+                <span class="menu-text">
+                    <strong>MY HOURS</strong>
+                    <small id="hrs-sub">View Hours &amp; Create Invoice</small>
+                </span>
+                <span class="menu-chev" aria-hidden="true">&rsaquo;</span>
+            </button>
+            <button type="button" class="logout-btn" onclick="logout()">Log out</button>
+        </div>
+
+        <!-- Screen 3: Quality Assurance inspection -->
+        <div id="qa-screen" class="screen-card hidden">
+            <div class="qa-section">
+                <h3>Site &amp; Inspector Details</h3>
+                <label class="field">Project<select id="qa-project"></select></label>
+                <label class="field">Project number<input id="qa-projno" readonly></label>
+                <label class="field">Address<input id="qa-address" readonly></label>
+                <label class="field">Main contractor<input id="qa-contractor" readonly></label>
+                <label class="field">Installer<input id="qa-installer" readonly></label>
+                <label class="field">Installation<select id="qa-install"><option value="">Select installation...</option></select></label>
+                <label class="field">Report type<select id="qa-type" disabled><option value="">Select report type...</option><option>Windows</option><option>Doors</option><option>Curtain Walling</option></select></label>
+                <label class="field">Reference<input id="qa-ref" maxlength="80" readonly></label>
+                <label class="field">Phase<input id="qa-phase" maxlength="40" readonly></label>
+                <label class="field">Elevation / level<input id="qa-level" maxlength="60" readonly></label>
+                <label class="field">Drawings<input id="qa-drawings" maxlength="200" readonly></label>
+                <div id="qa-stages" class="hidden"></div>
+                <label class="field">Inspector<input id="qa-inspector" readonly></label>
+                <label class="field">Date<input id="qa-date" readonly></label>
+            </div>
+            <div id="qa-body">
+                <div class="qa-section">
+                    <h3>QA Checks</h3>
+                    <div id="qa-checks"></div>
+                </div>
+                <div class="qa-section">
+                    <h3>Additional information (optional)</h3>
+                    <label class="field">Anything else to record?<textarea id="qa-extra" rows="3" maxlength="500" placeholder="Extra notes about the site or the work"></textarea></label>
+                    <label class="photo-drop">&#128247; Add extra photos (optional)
+                        <input type="file" id="qa-file" accept="image/*" multiple hidden>
+                    </label>
+                    <div id="qa-thumbs" class="thumbs"></div>
+                </div>
+                <p id="qa-msg" class="error-msg"></p>
+                <button type="button" class="qa-submit" onclick="submitQa()">SUBMIT INSPECTION REPORT</button>
+                <button type="button" class="qa-draft" onclick="saveQaDraft()">Save Draft</button>
+            </div>
+            <button type="button" class="logout-btn back-btn" onclick="backToMenu()">&larr; Back to menu</button>
+            <button type="button" class="logout-btn" onclick="logout()">Log out</button>
+        </div>
+
+        <!-- Screen: Daily diary -->
+        <div id="diary-screen" class="screen-card hidden">
+            <div id="dy-list">
+                <p class="note-small">One entry per job each day. The jobs you check in at appear here automatically. Save a draft with your before photos, then add your after photos later and submit.</p>
+                <div id="dy-cards"></div>
+                <div id="dy-add" class="qa-section hidden">
+                    <label class="field">Another project<select id="dy-site"></select></label>
+                    <button type="button" class="qa-draft" onclick="dyStartSelected()">Start an entry</button>
+                </div>
+            </div>
+            <div id="dy-edit" class="hidden">
+                <div>
+                    <h3 id="dy-title"></h3>
+                    <p id="dy-meta" class="note-small"></p>
+                </div>
+                <label class="field">What was done today<textarea id="dy-notes" rows="5" maxlength="1000" placeholder="Describe the work you did on this job today"></textarea></label>
+                <div class="qa-section">
+                    <h3>Before photos <small id="dy-count-b"></small></h3>
+                    <div class="dy-photo-btns" id="dy-btns-b">
+                        <label>&#128247; Camera<input type="file" accept="image/*" capture="environment" hidden data-sec="b"></label>
+                        <label>&#128444; Gallery<input type="file" accept="image/*" multiple hidden data-sec="b"></label>
+                    </div>
+                    <div id="dy-thumbs-b" class="thumbs"></div>
+                </div>
+                <div class="qa-section">
+                    <h3>After photos <small id="dy-count-a"></small></h3>
+                    <div class="dy-photo-btns" id="dy-btns-a">
+                        <label>&#128247; Camera<input type="file" accept="image/*" capture="environment" hidden data-sec="a"></label>
+                        <label>&#128444; Gallery<input type="file" accept="image/*" multiple hidden data-sec="a"></label>
+                    </div>
+                    <div id="dy-thumbs-a" class="thumbs"></div>
+                </div>
+                <p id="dy-msg" class="error-msg"></p>
+                <button type="button" class="qa-draft" id="dy-save" onclick="saveDiary(false)">Save draft</button>
+                <button type="button" class="qa-submit" id="dy-submit" onclick="saveDiary(true)">SUBMIT DIARY</button>
+                <button type="button" class="logout-btn" id="dy-discard" onclick="dyDiscard()">Delete this draft</button>
+                <button type="button" class="logout-btn" onclick="diaryBack()">&larr; Back to my diary</button>
+            </div>
+            <button type="button" class="logout-btn" onclick="logout()">Log out</button>
+        </div>
+
+        <!-- Screen: My hours -->
+        <div id="hours-screen" class="screen-card hidden">
+            <div class="week-nav">
+                <button type="button" onclick="shiftWeek(-1)">&larr;</button>
+                <strong id="week-label" class="mono"></strong>
+                <button type="button" onclick="shiftWeek(1)">&rarr;</button>
+            </div>
+            <p id="hours-msg" class="error-msg"></p>
+            <table id="t-shifts" class="mini"></table>
+            <p id="hours-note" class="note-small"></p>
+            <div class="total-bar">Total hours: <b id="hours-total" class="mono">0h 00m</b></div>
+            <button type="button" class="qa-submit hidden" id="btn-prepare" onclick="openInvoice()">PREPARE INVOICE</button>
+            <button type="button" class="qa-draft hidden" id="btn-myinv" onclick="openMyInvoices()">My invoices</button>
+            <button type="button" class="logout-btn hidden" id="btn-details" onclick="openDetails()">My invoice details</button>
+            <button type="button" class="logout-btn" onclick="hoursBack()">&larr; Back</button>
+            <button type="button" class="logout-btn" onclick="logout()">Log out</button>
+        </div>
+
+        <!-- Screen: My details -->
+        <div id="details-screen" class="screen-card hidden">
+            <p class="note-small">These details appear on your invoices. To change your name, PIN or access, ask an admin.</p>
+            <label class="field">Business name<input id="d-biz" maxlength="80"></label>
+            <label class="field">Address<textarea id="d-addr" rows="2" maxlength="300"></textarea></label>
+            <label class="field">Company reg. number<input id="d-reg" maxlength="80"></label>
+            <label class="field">VAT number<input id="d-vat" maxlength="80"></label>
+            <label class="field">UTR (CIS)<input id="d-utr" maxlength="80"></label>
+            <label class="field">Email<input id="d-email" type="email" maxlength="80"></label>
+            <label class="field">Phone<input id="d-phone" type="tel" maxlength="80"></label>
+            <label class="field">Payment details (shown on invoices)<textarea id="d-pay" rows="2" maxlength="300"></textarea></label>
+            <p id="details-msg" class="error-msg"></p>
+            <button type="button" class="qa-submit" onclick="saveMyDetails()">SAVE</button>
+            <button type="button" class="logout-btn" onclick="backToHours()">&larr; Back to hours</button>
+        </div>
+
+        <!-- Screen: My invoices -->
+        <div id="invlist-screen" class="screen-card hidden">
+            <p id="invlist-msg" class="error-msg"></p>
+            <div id="invlist-summary" class="total-bar hidden"></div>
+            <p id="invlist-note" class="note-small"></p>
+            <div id="invlist-body"></div>
+            <button type="button" class="logout-btn" onclick="backToHours()">&larr; Back to hours</button>
+        </div>
+
+        <!-- Screen: Help & FAQ -->
+        <div id="faq-screen" class="screen-card hidden faq">
+            <details><summary>Am I being tracked all the time?</summary>
+                <p>No. Your phone's location is only read at the moment you scan a site QR code to check in or out (or send a manual check-out). The app doesn't follow you in the background and can't see where you go the rest of the time.</p></details>
+            <details><summary>What information is recorded?</summary>
+                <p>Your name, the site, your check-in and check-out times, and how far you were from the site when you scanned, with a map link to that spot. If you use them, it also keeps the QA reports and photos you submit and the invoices you create. If a scan fails (for example you were too far from the site), the attempt is recorded so admins can see it. Wrong PIN entries aren't stored.</p></details>
+            <details><summary>Who can see my information?</summary>
+                <p>Admins at <span data-company>the company</span>. Other contractors can't see your hours, reports or invoices.</p></details>
+            <details><summary>Is my data secure?</summary>
+                <p>Records are kept in a private Google Sheet and Drive folder that only authorised people can open, and the app connects over an encrypted connection. Admin access needs a PIN of 6 digits or more. No system can promise to be 100% secure, so keep your PIN private (anyone who knows it can act as you) and tell an admin if you think it has been shared.</p></details>
+            <details><summary>How long is my information kept?</summary>
+                <p>Hours records are kept so you can be paid and for the company's accounts. If you'd like to know exactly how long, or want something corrected, ask your admin.</p></details>
+            <details><summary>Why does the app want my camera and location?</summary>
+                <p>The camera is used to scan the site QR code and to take QA photos. Location is used to confirm you're at the site when you scan. They're only used when you do those things.</p></details>
+            <details><summary>What if I have no signal on site?</summary>
+                <p>Log in once with signal and your PIN will also work offline. Scan as normal and the app saves it on your phone, then sends it when you're back online. Open the page again once you have signal, within 24 hours. It is not recorded until it has sent.</p></details>
+            <details><summary>I forgot to check in or out</summary>
+                <p>Forgot to check in: scan the site code with Check Out selected and choose "I forgot to check in", then add your start time and reason. Forgot to check out: the app closes your shift at 23:00 and an admin will correct it. Those hours aren't counted on invoices until they have.</p></details>
+            <details><summary>Invoices: who sees them?</summary>
+                <p>You choose your own rate for each day. Submitted invoices can be seen by admins, and you can download a PDF of each one from My Hours. If invoicing isn't switched on for you, ask your admin.</p></details>
+            <details><summary>Can I put this on my phone's home screen?</summary>
+                <p>Yes, it works like an app. On Android (Chrome): tap the three dots, then "Install app" (or "Add to Home screen"). On iPhone (Safari): tap the Share button, then "Add to Home Screen". Open it once with signal first.</p></details>
+            <details><summary>I've forgotten my PIN or want a new one</summary>
+                <p>Ask your admin. They can set a new PIN for you.</p></details>
+            <button type="button" class="logout-btn" onclick="closeFaq()">&larr; Back</button>
+        </div>
+
+        <!-- Screen: Invoice -->
+        <div id="invoice-screen" class="screen-card hidden">
+            <p id="inv-period" class="note-small"></p>
+            <table id="t-invoice" class="mini"></table>
+            <div class="total-bar">Total hours: <b id="inv-hours" class="mono">0.00</b><br>Total sum: <b id="inv-sum" class="mono">&pound;0.00</b></div>
+            <p id="inv-msg" class="error-msg"></p>
+            <button type="button" class="qa-submit" onclick="submitInvoice()">CONFIRM &amp; SUBMIT INVOICE</button>
+            <button type="button" class="qa-draft" onclick="downloadInvoice()">Download PDF</button>
+            <button type="button" class="logout-btn" onclick="backToHours()">&larr; Back to hours</button>
+        </div>
+
+        <!-- Screen 4: Action Selection & Scanner -->
+        <div id="scanner-screen" class="screen-card hidden">
+            <div class="user-badge">
+                <span id="contractor-greeting">PIN Entered</span>
+            </div>
+            <div class="action-toggle">
+                <button type="button" id="btn-in" class="toggle-btn active" onclick="setAction('Check-In')">Check In</button>
+                <button type="button" id="btn-out" class="toggle-btn" onclick="setAction('Check-Out')">Check Out</button>
+            </div>
+            <p class="scan-instructions">Align site QR code inside frame</p>
+            <div id="qr-reader"></div>
+            <div id="status-card" class="status-card hidden">
+                <p id="status-text">Processing...</p>
+            </div>
+            <div id="confirm-box" class="confirm-box hidden">
+                <button type="button" class="confirm-yes" onclick="confirmCheckout()">Yes, check out</button>
+                <button type="button" class="confirm-no" onclick="declineCheckout()">No</button>
+            </div>
+            <div id="nocheckin-box" class="confirm-box hidden">
+                <button type="button" class="confirm-yes" onclick="confirmCheckIn()">Yes, check in</button>
+                <button type="button" class="confirm-no" onclick="declineCheckIn()">No</button>
+                <button type="button" class="forgot-btn" onclick="showManualForm()">I forgot to check in: check out anyway</button>
+            </div>
+            <div id="manual-form" class="manual-form hidden">
+                <p class="manual-title">Forgot to check in?</p>
+                <label for="manual-comment">Please provide your check-in time and the reason you didn't check in (required)</label>
+                <textarea id="manual-comment" rows="4" maxlength="300" placeholder="e.g. Arrived at 7:30, forgot to scan the QR code"></textarea>
+                <p class="manual-note">This will be recorded as a manual entry, not a scanned check-in.</p>
+                <p id="manual-error" class="error-msg"></p>
+                <div class="confirm-box">
+                    <button type="button" class="confirm-yes" onclick="submitManualCheckout()">Submit check-out</button>
+                    <button type="button" class="confirm-no" onclick="cancelManual()">Cancel</button>
+                </div>
+            </div>
+            <button type="button" id="retry-btn" class="retry-btn hidden" onclick="retryScan()">Try again</button>
+            <button type="button" class="logout-btn hours-btn hidden" onclick="openHours()">My hours &amp; invoices</button>
+            <button type="button" class="logout-btn back-btn" onclick="backToMenu()">&larr; Back to menu</button>
+            <button type="button" class="logout-btn" onclick="logout()">Log out</button>
+        </div>
+
+        <footer class="app-footer">
+            <p>&copy; <span id="footer-year">2026</span> SiteOpSync&trade;. All rights reserved.</p>
+            <p class="credit"><span data-company>SiteOpSync</span> &middot; Powered by SiteOpSync | Karl Harris</p>
+            <p class="credit mono" id="version-line"></p>
         </footer>
+    </div>
 
-    </section>
+    <nav id="bottom-nav" class="bottom-nav hidden"></nav>
 
-    <dialog id="dlg">
-        <h2 id="dt"></h2>
-        <label class="field">Client id (letters, numbers, dashes; fixed once created)<input id="c-id" maxlength="40"></label>
-        <label class="field">Company name<input id="c-name" maxlength="80"></label>
-        <label class="field">Site address (Pages URL)<input id="c-pages" maxlength="200" placeholder="https://i-glazeltd-siteopsync.pages.dev"></label>
-        <label class="field">Apps Script web app URL<input id="c-script" maxlength="300" placeholder="https://script.google.com/macros/s/.../exec"></label>
-        <label class="field">Notes<textarea id="c-notes" rows="2" maxlength="500"></textarea></label>
-        <p id="de" class="err"></p>
-        <div class="btns"><button id="ds">Save</button><button class="ghost" onclick="dlg.close()">Cancel</button></div>
-    </dialog>
-
-    <script src="super.js"></script>
+    <script>
+        (function tickClock() {
+            const el = document.getElementById("live-clock");
+            const upd = () => {
+                if (!el) return;
+                const d = new Date();
+                el.textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+            };
+            upd();
+            setInterval(upd, 15000);
+        })();
+    </script>
+    <script src="config.js?v=1.24.0"></script>
+    <script src="branding.js?v=1.24.0"></script>
+    <script src="invoice.js?v=1.24.0"></script>
+    <script src="app.js?v=1.24.0"></script>
 </body>
 </html>
